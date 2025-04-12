@@ -33,4 +33,4 @@ Insurance groups were recoded into Private, Public, and Uninsured.
 All dollar values are reported in nominal terms.
 
 📌 Disclaimer:
-The Medical Expenditure Panel Survey (MEPS) is a nationally representative dataset based on a complex survey design. While some weighted estimates (e.g., weighted average expenditure) are included, most analyses and visualizations in this project are unweighted for simplicity and exploratory purposes. This tradeoff allows for a clearer demonstration of analytical and visualization techniques rather than nationally representative inference.
+Note: The Medical Expenditure Panel Survey (MEPS) data used in this project is based on a complex survey design intended to produce nationally representative estimates. While some analyses in this project apply survey weights to account for this design, others are unweighted for simplicity and exploratory purposes. Users should be cautious when interpreting unweighted results, as they may not accurately reflect national estimates.
