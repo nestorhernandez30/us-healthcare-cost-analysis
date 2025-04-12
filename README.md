@@ -51,7 +51,7 @@ Disclaimer:The Medical Expenditure Panel Survey (MEPS) data used in this project
 📌 Repository Contents:
 
 - `meps_1922.py` – Full Python script with data cleaning and transformation (with notes intact)
-- `MEPS_1922.ipynb` – Jupyter Notebook version with results and outputs included
+- `MEPS_1922.ipynb` – Full Python script with data cleaning and transformation (with notes intact)
 - `sql_analysis_meps.txt` – Annotated SQL queries with explanations and output results
 - `meps19_22_long.csv` – Final long-format dataset (transformed from wide, suitable for SQL & Tableau)
 
