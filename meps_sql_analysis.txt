@@ -1,0 +1,165 @@
+-- Preview the dataset (first 5 rows)
+SELECT * FROM meps_long
+LIMIT 5;
+
+-- Show column names, data types, and nullability
+PRAGMA table_info(meps_long);
+
+-- Total number of records in the dataset
+SELECT COUNT(*) AS Total_Records 
+FROM meps_long;
+
+-- Results:
+-- 6,760 Total Records
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+-- Average Total Expenditure by Year
+SELECT 
+    Year, 
+    ROUND(AVG(Total_Expenditure), 2) AS Avg_Expenditure
+FROM meps_long
+GROUP BY Year
+ORDER BY Year;
+
+-- Results:
+-- 2019: 7250.83
+-- 2020: 7719.33
+-- 2021: 8119.90
+-- 2022: 7868.40
+
+-- Note: Figure 2 on Tableau shows “$7,700 average” is a rough unweighted average of these.
+-- But the weighted average is shown below:
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+-- Weighted average total expenditure using survey weights
+SELECT 
+    ROUND(SUM(Total_Expenditure * LONGWT) / SUM(LONGWT), 2) AS Weighted_Avg_Expenditure
+FROM meps_long
+WHERE Total_Expenditure IS NOT NULL;
+
+-- Result:
+-- 6,450.76
+
+-- This is the weighted average.
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+-- Number of individuals by year and insurance type
+SELECT 
+    Year, 
+    Insurance_Group, 
+    COUNT(*) AS Individuals
+FROM meps_long
+GROUP BY Year, Insurance_Group
+ORDER BY Year, Individuals DESC;
+
+-- Results:
+-- 2019	Private	797
+-- 2019	Public	756
+-- 2019	Uninsured	137
+-- 2020	Private	797
+-- 2020	Public	767
+-- 2020	Uninsured	126
+-- 2021	Public	782
+-- 2021	Private	765
+-- 2021	Uninsured	143
+-- 2022	Public	788
+-- 2022	Private	756
+-- 2022	Uninsured	146
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+-- Average expenditure by income group
+SELECT 
+    CASE 
+        WHEN Income < 25000 THEN 'Low (<25K)'
+        WHEN Income BETWEEN 25000 AND 50000 THEN 'Lower-Middle (25K-50K)'
+        WHEN Income BETWEEN 50000 AND 75000 THEN 'Middle (50K-75K)'
+        WHEN Income BETWEEN 75000 AND 100000 THEN 'Upper-Middle (75K-100K)'
+        ELSE 'High (>100K)'
+    END AS Income_Group,
+    ROUND(AVG(Total_Expenditure), 2) AS Avg_Expenditure,
+    COUNT(*) AS People
+FROM meps_long
+WHERE Income IS NOT NULL
+GROUP BY Income_Group
+ORDER BY Avg_Expenditure DESC;
+
+-- Results:
+-- Low (<25K)	9405.64	1836
+-- Middle (50K-75K)	8231.08	1013
+-- Lower-Middle (25K-50K)	7265.67	1441
+-- Upper-Middle (75K-100K)	7009.07	692
+-- High (>100K)	6234.70	1778
+
+-- Shows how low-income groups spend more.
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+--  Year-over-year changes in average total expenditure
+SELECT 
+    Year,
+    ROUND(AVG(Total_Expenditure), 2) AS Avg_Expenditure,
+    ROUND(AVG(Total_Expenditure) - LAG(AVG(Total_Expenditure)) OVER (ORDER BY Year), 2) AS YoY_Change
+FROM meps_long
+GROUP BY Year
+ORDER BY Year;
+
+-- Results:
+-- 2020	7719.33	468.50
+-- 2021	8119.90	400.57
+-- 2022	7686.40	-433.50
+
+-- Matches trend chart in Tableau; shows biggest drop was post-2021.
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+-- Top 10 highest spenders in the dataset (outliers)
+SELECT 
+    DUPERSID, Year, Income, Insurance_Group, Total_Expenditure
+FROM meps_long
+ORDER BY Total_Expenditure DESC
+LIMIT 10;
+
+-- Results:
+-- 2461312101	2020	38000.0	Public	779785.0
+-- 2461312101	2021	59000.0	Public	770800.0
+-- 2462724101	2020	64046.0	Private	382032.0
+-- 2462724101	2021	90066.0	Private	332585.0
+-- 2460114102	2020	162302.0	Private	306228.0
+-- 2462380101	2022	234739.0	Public	225344.0
+-- 2462768102	2021	0.0	Public	222578.0
+-- 2462692102	2021	48000.0	Public	217000.0
+-- 2460573101	2019	11400.0	Public	210752.0
+-- 2462380101	2021	106960.0	Public	207145.0
+
+-- These extreme values likely influence the mean significantly.
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+-- Identify cases where spending > income
+SELECT *
+FROM meps_long
+WHERE Total_Expenditure > Income
+ORDER BY Total_Expenditure DESC;
+
+-- These are individuals potentially facing financial hardship.
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+-- Quick audit: Check for missing values
+SELECT 
+    COUNT(*) AS Total_Rows,
+    SUM(CASE WHEN Total_Expenditure IS NULL THEN 1 ELSE 0 END) AS Missing_Expenditure,
+    SUM(CASE WHEN Income IS NULL THEN 1 ELSE 0 END) AS Missing_Income,
+    SUM(CASE WHEN Insurance_Group IS NULL THEN 1 ELSE 0 END) AS Missing_Insurance
+FROM meps_long;
+
+-- Results:
+-- 6760	0	0	0
+
+-- Dataset is clean with no missing values in the main variables.
+
+/* ---------------------------------------------------------------------------------------------------- */
